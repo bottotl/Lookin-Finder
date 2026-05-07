@@ -26,6 +26,13 @@ const breadcrumbs = document.getElementById('breadcrumbs');
 const detailsCard = document.getElementById('detailsCard');
 const selectionBadge = document.getElementById('selectionBadge');
 const currentFolderName = document.getElementById('currentFolderName');
+const sidebarStatus = document.getElementById('sidebarStatus');
+const targetAppName = document.getElementById('targetAppName');
+const targetDeviceName = document.getElementById('targetDeviceName');
+const currentPathSummary = document.getElementById('currentPathSummary');
+const currentFolderSummary = document.getElementById('currentFolderSummary');
+const selectedItemSummary = document.getElementById('selectedItemSummary');
+const selectedItemPath = document.getElementById('selectedItemPath');
 window.__lookinResolve = (id, value) => { const pendingRequest = pending.get(id); if (!pendingRequest) return; pending.delete(id); pendingRequest.resolve(value); };
 window.__lookinReject = (id, error) => { const pendingRequest = pending.get(id); if (!pendingRequest) return; pending.delete(id); pendingRequest.reject(error); };
 function callNative(action, payload = {}) { return new Promise((resolve, reject) => { const id = requestSequence++; pending.set(id, { resolve, reject }); window.webkit.messageHandlers.lookinFileBrowser.postMessage({ id, action, payload }); }); }
@@ -38,8 +45,8 @@ function displayPath(path) { return path ? '/' + path : '/'; }
 function parentPath(path) { if (!path) return ''; const segments = path.split('/').filter(Boolean); segments.pop(); return segments.join('/'); }
 function selectedEntry() { return state.entries.find(item => item.remotePath === state.selectedPath) || null; }
 function folderLabel(path) { if (!path) return '根目录'; const segments = path.split('/').filter(Boolean); return segments[segments.length - 1] || '根目录'; }
-function entryKind(entry) { return entry.kind || (entry.isDirectory ? 'Folder' : 'File'); }
-function entryIcon(entry) { return entry.isDirectory ? '📁' : '📄'; }
+function entryKind(entry) { return entry.kind || (entry.isDirectory ? '文件夹' : '文件'); }
+function entryIcon(entry) { return entry.isDirectory ? 'DIR' : 'FILE'; }
 function currentLocationForPath(path) { if (!path) return 'rootBtn'; const found = quickLocations.find(item => item.path && (path === item.path || path.startsWith(item.path + '/'))); return found ? found.id : null; }
 function breadcrumbsForPath(path) { const list = [{ label: '根目录', path: '' }]; const segments = path.split('/').filter(Boolean); let current = ''; segments.forEach(segment => { current = current ? current + '/' + segment : segment; list.push({ label: segment, path: current }); }); return list; }
 function clearElement(node) { while (node.firstChild) node.removeChild(node.firstChild); }
@@ -73,14 +80,14 @@ function filteredAndSortedEntries() {
 function renderApps() {
   clearElement(appTabs);
   if (!state.selectedAppID && state.apps.length > 0) state.selectedAppID = state.apps[0].id;
-  if (!state.apps.length) { const empty = document.createElement('div'); empty.className = 'small-note'; empty.textContent = 'No USB-connected apps are available right now.'; appTabs.appendChild(empty); return; }
+  if (!state.apps.length) { const empty = document.createElement('div'); empty.className = 'small-note'; empty.textContent = '当前没有可用的 USB App。'; appTabs.appendChild(empty); return; }
   state.apps.forEach(app => {
     const button = document.createElement('button');
     button.className = 'app-card' + (app.id === state.selectedAppID ? ' active' : '') + (app.supportsFileTransfer === false ? ' unsupported' : '');
-    const avatar = document.createElement('span'); avatar.className = 'app-avatar'; avatar.textContent = app.supportsFileTransfer === false ? '⚠︎' : '📱';
+    const avatar = document.createElement('span'); avatar.className = 'app-avatar'; avatar.textContent = app.supportsFileTransfer === false ? '!' : 'iOS';
     const meta = document.createElement('span'); meta.className = 'app-meta';
-    const name = document.createElement('span'); name.className = 'app-name'; name.textContent = app.appName || app.bundleIdentifier || 'Unknown App';
-    const subtitle = document.createElement('span'); subtitle.className = 'app-subtitle'; subtitle.textContent = `${app.deviceName || 'USB device'} · ${app.bundleIdentifier || 'bundle'}${app.supportsFileTransfer === false ? ' · update server' : ''}`;
+    const name = document.createElement('span'); name.className = 'app-name'; name.textContent = app.appName || app.bundleIdentifier || '未知 App';
+    const subtitle = document.createElement('span'); subtitle.className = 'app-subtitle'; subtitle.textContent = `${app.deviceName || 'USB 设备'} · ${app.bundleIdentifier || 'bundle'}${app.supportsFileTransfer === false ? ' · 需升级服务端' : ''}`;
     meta.appendChild(name); meta.appendChild(subtitle); button.appendChild(avatar); button.appendChild(meta);
     button.addEventListener('click', async () => { state.selectedAppID = app.id; state.selectedPath = null; if (app.supportsFileTransfer === false) { state.currentPath = ''; state.entries = []; setStatus(unsupportedMessage()); render(); return; } await openPath(''); });
     appTabs.appendChild(button);
@@ -100,10 +107,10 @@ function renderList(items) {
     const icon = document.createElement('span'); icon.className = 'entry-icon'; icon.textContent = entryIcon(entry);
     const nameBlock = document.createElement('div'); nameBlock.className = 'entry-name-block';
     const name = document.createElement('div'); name.className = 'entry-name'; name.textContent = entry.name || 'Untitled';
-    const subtitle = document.createElement('div'); subtitle.className = 'entry-subtitle'; subtitle.textContent = entry.isDirectory ? 'Double-click to open' : 'Remote sandbox item';
+    const subtitle = document.createElement('div'); subtitle.className = 'entry-subtitle'; subtitle.textContent = entry.isDirectory ? '双击打开文件夹' : 'iOS 沙盒文件';
     nameBlock.appendChild(name); nameBlock.appendChild(subtitle); nameWrap.appendChild(icon); nameWrap.appendChild(nameBlock); nameCell.appendChild(nameWrap);
     const kindCell = document.createElement('td'); kindCell.textContent = entryKind(entry);
-    const sizeCell = document.createElement('td'); sizeCell.textContent = entry.sizeText || (entry.isDirectory ? '—' : 'Unknown');
+    const sizeCell = document.createElement('td'); sizeCell.textContent = entry.sizeText || (entry.isDirectory ? '-' : '未知');
     const pathCell = document.createElement('td'); pathCell.className = 'mono'; pathCell.textContent = entry.remotePath || '';
     row.appendChild(nameCell); row.appendChild(kindCell); row.appendChild(sizeCell); row.appendChild(pathCell); entriesBody.appendChild(row);
   });
@@ -118,7 +125,7 @@ function renderGrid(items) {
     const icon = document.createElement('div'); icon.className = 'grid-icon'; icon.textContent = entryIcon(entry);
     const name = document.createElement('div'); name.className = 'grid-name'; name.textContent = entry.name || 'Untitled';
     const kind = document.createElement('div'); kind.className = 'muted'; kind.textContent = entryKind(entry);
-    const meta = document.createElement('div'); meta.className = 'grid-meta'; meta.textContent = entry.isDirectory ? (entry.remotePath || '') : `${entry.sizeText || 'Unknown'} · ${entry.remotePath || ''}`;
+    const meta = document.createElement('div'); meta.className = 'grid-meta'; meta.textContent = entry.isDirectory ? (entry.remotePath || '') : `${entry.sizeText || '未知'} · ${entry.remotePath || ''}`;
     card.appendChild(icon); card.appendChild(name); card.appendChild(kind); card.appendChild(meta); gridBody.appendChild(card);
   });
 }
@@ -130,10 +137,10 @@ function renderEntries() {
   gridBody.classList.toggle('hidden', state.viewMode !== 'grid');
   const app = selectedApp(); const unsupported = !!(app && app.supportsFileTransfer === false);
   emptyState.hidden = state.apps.length > 0 && items.length > 0 && !unsupported;
-  if (!state.apps.length) emptyState.innerHTML = '<div><strong>No USB-connected iOS app</strong><div>Plug in a device, launch the target app, then reload the connected apps list.</div></div>';
-  else if (unsupported) emptyState.innerHTML = `<div><strong>File transfer unavailable</strong><div>${unsupportedMessage()}</div></div>`;
-  else if (state.filterText && !items.length) emptyState.innerHTML = '<div><strong>No matching files</strong><div>Try another search term or clear the current filter.</div></div>';
-  else if (!items.length) emptyState.innerHTML = '<div><strong>This folder is empty</strong><div>Try uploading a file, importing a URL, or create a new folder here.</div></div>';
+  if (!state.apps.length) emptyState.innerHTML = '<div><strong>没有 USB iOS App</strong><div>连接设备并启动目标 App 后，点击左侧刷新。</div></div>';
+  else if (unsupported) emptyState.innerHTML = `<div><strong>当前 App 不支持文件传输</strong><div>${unsupportedMessage()}</div></div>`;
+  else if (state.filterText && !items.length) emptyState.innerHTML = '<div><strong>没有匹配文件</strong><div>换一个关键词，或清空搜索条件。</div></div>';
+  else if (!items.length) emptyState.innerHTML = '<div><strong>当前目录为空</strong><div>可以上传文件、从 URL 导入，或创建新文件夹。</div></div>';
   return items;
 }
 function renderDetails() {
@@ -144,46 +151,58 @@ function renderDetails() {
   const textWrap = document.createElement('div');
   const title = document.createElement('div'); title.className = 'details-title';
   const subtitle = document.createElement('div'); subtitle.className = 'details-subtitle';
-  if (entry) { icon.textContent = entryIcon(entry); title.textContent = entry.name || 'Untitled'; subtitle.textContent = entryKind(entry); }
-  else if (app) { icon.textContent = '🗂'; title.textContent = folderLabel(state.currentPath); subtitle.textContent = 'Current location'; }
-  else { icon.textContent = '📂'; title.textContent = 'Nothing selected'; subtitle.textContent = 'Pick an app to browse its sandbox'; }
+  if (entry) { icon.textContent = entryIcon(entry); title.textContent = entry.name || '未命名'; subtitle.textContent = entryKind(entry); }
+  else if (app) { icon.textContent = 'DIR'; title.textContent = folderLabel(state.currentPath); subtitle.textContent = '当前目录'; }
+  else { icon.textContent = 'DIR'; title.textContent = '未选择'; subtitle.textContent = '选择一个 App 开始浏览'; }
   textWrap.appendChild(title); textWrap.appendChild(subtitle); hero.appendChild(icon); hero.appendChild(textWrap); detailsCard.appendChild(hero);
   const grid = document.createElement('div'); grid.className = 'detail-grid';
   if (entry) {
-    grid.appendChild(createDetailRow('Path', displayPath(entry.remotePath || ''), true));
-    grid.appendChild(createDetailRow('Kind', entryKind(entry)));
-    grid.appendChild(createDetailRow('Size', entry.sizeText || (entry.isDirectory ? 'Folder' : 'Unknown')));
-    if (app) { grid.appendChild(createDetailRow('App', app.appName || app.bundleIdentifier || 'Unknown App')); grid.appendChild(createDetailRow('Device', app.deviceName || 'USB device')); }
+    grid.appendChild(createDetailRow('路径', displayPath(entry.remotePath || ''), true));
+    grid.appendChild(createDetailRow('类型', entryKind(entry)));
+    grid.appendChild(createDetailRow('大小', entry.sizeText || (entry.isDirectory ? '文件夹' : '未知')));
+    if (app) { grid.appendChild(createDetailRow('App', app.appName || app.bundleIdentifier || '未知 App')); grid.appendChild(createDetailRow('设备', app.deviceName || 'USB 设备')); }
   } else if (app) {
-    grid.appendChild(createDetailRow('Current Path', displayPath(state.currentPath), true));
-    grid.appendChild(createDetailRow('Items', `${state.entries.length} item${state.entries.length === 1 ? '' : 's'}`));
-    grid.appendChild(createDetailRow('View', state.viewMode === 'grid' ? 'Grid view' : 'List view'));
-    grid.appendChild(createDetailRow('Sort', sortSelect.options[sortSelect.selectedIndex].textContent.replace('Sort: ', '')));
-    grid.appendChild(createDetailRow('App', app.appName || app.bundleIdentifier || 'Unknown App'));
-  } else { grid.appendChild(createDetailRow('Hint', 'Use the left sidebar to choose a connected app.')); }
+    grid.appendChild(createDetailRow('当前路径', displayPath(state.currentPath), true));
+    grid.appendChild(createDetailRow('项目数', `${state.entries.length} 项`));
+    grid.appendChild(createDetailRow('视图', state.viewMode === 'grid' ? '网格' : '列表'));
+    grid.appendChild(createDetailRow('排序', sortSelect.options[sortSelect.selectedIndex].textContent));
+    grid.appendChild(createDetailRow('App', app.appName || app.bundleIdentifier || '未知 App'));
+  } else { grid.appendChild(createDetailRow('提示', '从左侧选择一个已连接的 App。')); }
   detailsCard.appendChild(grid);
   const actions = document.createElement('div'); actions.className = 'detail-actions';
   if (entry && entry.isDirectory) { const openButton = document.createElement('button'); openButton.className = 'secondary'; openButton.textContent = '打开文件夹'; openButton.addEventListener('click', () => openPath(entry.remotePath || '')); actions.appendChild(openButton); }
-  if (entry && !entry.isDirectory) { const downloadButton = document.createElement('button'); downloadButton.className = 'secondary'; downloadButton.textContent = '下载文件'; downloadButton.addEventListener('click', downloadSelected); actions.appendChild(downloadButton); }
+  if (entry && !entry.isDirectory) { const downloadButton = document.createElement('button'); downloadButton.className = 'secondary'; downloadButton.textContent = '下载到 Mac'; downloadButton.addEventListener('click', downloadSelected); actions.appendChild(downloadButton); }
   if (entry) { const deleteButton = document.createElement('button'); deleteButton.className = 'danger'; deleteButton.textContent = '删除'; deleteButton.addEventListener('click', deleteSelected); actions.appendChild(deleteButton); }
   if (actions.childNodes.length) detailsCard.appendChild(actions);
-  const note = document.createElement('div'); note.className = 'small-note'; note.textContent = entry ? (entry.isDirectory ? 'Tip: double-click a folder to drill into it. Grid view works too.' : 'Use the toolbar or the buttons above for quick actions on the selected file.') : 'The inspector updates when you select a file or folder.'; detailsCard.appendChild(note);
+  const note = document.createElement('div'); note.className = 'small-note'; note.textContent = entry ? (entry.isDirectory ? '双击文件夹也可以进入。' : '下载会把 iOS 沙盒文件保存到 Mac。') : '选中文件或文件夹后，这里会显示可用操作。'; detailsCard.appendChild(note);
 }
 function renderStatusBadge(visibleItems) {
   const app = selectedApp(); const entry = selectedEntry(); selectionBadge.classList.toggle('active', !!app);
-  if (!app) selectionBadge.textContent = 'No app selected';
-  else if (app.supportsFileTransfer === false) selectionBadge.textContent = 'Transfer unavailable';
-  else if (entry) selectionBadge.textContent = entry.isDirectory ? 'Folder selected' : 'File selected';
-  else if (state.filterText) selectionBadge.textContent = `${visibleItems.length} filtered result${visibleItems.length === 1 ? '' : 's'}`;
-  else selectionBadge.textContent = `${visibleItems.length} item${visibleItems.length === 1 ? '' : 's'} in view`;
+  if (!app) selectionBadge.textContent = '未选择 App';
+  else if (app.supportsFileTransfer === false) selectionBadge.textContent = '不可传输';
+  else if (entry) selectionBadge.textContent = entry.isDirectory ? '已选文件夹' : '已选文件';
+  else if (state.filterText) selectionBadge.textContent = `${visibleItems.length} 个匹配项`;
+  else selectionBadge.textContent = `${visibleItems.length} 项`;
+}
+function renderContextSummary(visibleItems) {
+  const app = selectedApp();
+  const entry = selectedEntry();
+  targetAppName.textContent = app ? (app.appName || app.bundleIdentifier || '未知 App') : '未选择';
+  targetDeviceName.textContent = app ? `${app.deviceName || 'USB 设备'} · ${app.bundleIdentifier || 'bundle'}` : 'USB 设备';
+  currentPathSummary.textContent = displayPath(state.currentPath);
+  currentFolderSummary.textContent = app ? `${visibleItems.length} 项可见` : '选择 App 后显示';
+  selectedItemSummary.textContent = entry ? (entry.name || '未命名') : '无';
+  selectedItemPath.textContent = entry ? displayPath(entry.remotePath || '') : '未选择';
+  sidebarStatus.textContent = app ? `${app.appName || app.bundleIdentifier || '未知 App'} · ${displayPath(state.currentPath)}` : '未选择 App';
 }
 function render() {
   renderApps(); renderPlaces(); renderBreadcrumbs();
   const visibleItems = renderEntries();
   renderDetails(); renderStatusBadge(visibleItems);
+  renderContextSummary(visibleItems);
   const app = selectedApp(); const entry = selectedEntry();
   pathInput.value = state.currentPath; searchInput.value = state.filterText; sortSelect.value = state.sortMode;
-  footerPath.textContent = displayPath(state.currentPath); footerCount.textContent = `${visibleItems.length} item${visibleItems.length === 1 ? '' : 's'}`; currentFolderName.textContent = folderLabel(state.currentPath);
+  footerPath.textContent = displayPath(state.currentPath); footerCount.textContent = `${visibleItems.length} 项`; currentFolderName.textContent = folderLabel(state.currentPath);
   const browseEnabled = !!state.selectedAppID && canBrowseSelectedApp();
   listViewBtn.classList.toggle('active-toggle', state.viewMode === 'list');
   gridViewBtn.classList.toggle('active-toggle', state.viewMode === 'grid');
@@ -196,20 +215,20 @@ function render() {
   document.getElementById('downloadBtn').disabled = !entry || entry.isDirectory;
   document.getElementById('deleteBtn').disabled = !entry;
   if (!state.status) {
-    if (!app) statusText.textContent = 'Choose a connected app to start browsing.';
+    if (!app) statusText.textContent = '选择左侧 USB App 后开始浏览。';
     else if (app.supportsFileTransfer === false) statusText.textContent = unsupportedMessage();
-    else if (entry) statusText.textContent = `${entryKind(entry)} selected at ${displayPath(entry.remotePath || '')}`;
-    else if (state.filterText) statusText.textContent = `Filtering ${visibleItems.length} result${visibleItems.length === 1 ? '' : 's'} inside ${displayPath(state.currentPath)}.`;
-    else statusText.textContent = `Browsing ${displayPath(state.currentPath)} in ${app.appName || app.bundleIdentifier || 'the selected app'}.`;
+    else if (entry) statusText.textContent = `已选择${entryKind(entry)}：${displayPath(entry.remotePath || '')}`;
+    else if (state.filterText) statusText.textContent = `在 ${displayPath(state.currentPath)} 中找到 ${visibleItems.length} 个匹配项。`;
+    else statusText.textContent = `正在浏览 ${app.appName || app.bundleIdentifier || '当前 App'} 的 ${displayPath(state.currentPath)}。`;
   }
 }
-async function bootstrap(remotePath = '') { try { setStatus('Loading apps…'); const result = await callNative('bootstrap', { appID: state.selectedAppID, remotePath }); state.apps = result.apps || []; state.selectedAppID = result.selectedAppID || (state.apps[0] ? state.apps[0].id : null); state.currentPath = result.currentPath || ''; state.entries = result.items || []; state.selectedPath = null; setStatus(result.statusMessage || (state.apps.length ? '' : 'No USB-connected iOS app found.')); render(); } catch (error) { setStatus(messageFromError(error, 'Failed to load apps.')); render(); } }
-async function openPath(remotePath) { if (!state.selectedAppID) { setStatus('Select a USB app first.'); render(); return; } if (!canBrowseSelectedApp()) { state.entries = []; state.currentPath = remotePath || ''; state.selectedPath = null; setStatus(unsupportedMessage()); render(); return; } try { setStatus(`Opening ${displayPath(remotePath)}…`); const result = await callNative('listDirectory', { appID: state.selectedAppID, remotePath }); state.currentPath = result.currentPath || remotePath || ''; state.entries = result.items || []; state.selectedPath = null; setStatus(''); render(); } catch (error) { setStatus(messageFromError(error, 'Failed to open directory.')); render(); } }
-async function createFolder() { const name = (newFolderInput.value || '').trim(); if (!name) { setStatus('Enter a folder name first.'); render(); return; } try { setStatus('Creating folder…'); await callNative('createDirectory', { appID: state.selectedAppID, parentPath: state.currentPath, name }); newFolderInput.value = ''; await openPath(state.currentPath); setStatus('Folder created.'); render(); } catch (error) { setStatus(messageFromError(error, 'Failed to create folder.')); render(); } }
-async function uploadFile() { if (!state.selectedAppID) { setStatus('Select a USB app first.'); render(); return; } try { setStatus('Selecting local file…'); await callNative('uploadFile', { appID: state.selectedAppID, directoryPath: state.currentPath }); await openPath(state.currentPath); setStatus('Upload finished.'); render(); } catch (error) { setStatus(messageFromError(error, 'Upload failed.')); render(); } }
-async function importURL() { const sourceURL = (sourceUrlInput.value || '').trim(); if (!sourceURL) { setStatus('Enter a macOS URL first.'); render(); return; } if (!state.selectedAppID) { setStatus('Select a USB app first.'); render(); return; } try { setStatus('Downloading from Mac URL…'); await callNative('importURL', { appID: state.selectedAppID, directoryPath: state.currentPath, sourceURL }); await openPath(state.currentPath); setStatus('URL import finished.'); render(); } catch (error) { setStatus(messageFromError(error, 'Import failed.')); render(); } }
-async function downloadSelected() { const entry = selectedEntry(); if (!entry || entry.isDirectory) { setStatus('Select a file first.'); render(); return; } try { setStatus('Saving file…'); await callNative('downloadFile', { appID: state.selectedAppID, remotePath: entry.remotePath }); setStatus('Download finished.'); render(); } catch (error) { setStatus(messageFromError(error, 'Download failed.')); render(); } }
-async function deleteSelected() { const entry = selectedEntry(); if (!entry) { setStatus('Select an item first.'); render(); return; } try { setStatus('Deleting item…'); await callNative('removeItem', { appID: state.selectedAppID, remotePath: entry.remotePath }); await openPath(state.currentPath); setStatus('Delete finished.'); render(); } catch (error) { setStatus(messageFromError(error, 'Delete failed.')); render(); } }
+async function bootstrap(remotePath = '') { try { setStatus('正在加载 App…'); const result = await callNative('bootstrap', { appID: state.selectedAppID, remotePath }); state.apps = result.apps || []; state.selectedAppID = result.selectedAppID || (state.apps[0] ? state.apps[0].id : null); state.currentPath = result.currentPath || ''; state.entries = result.items || []; state.selectedPath = null; setStatus(result.statusMessage || (state.apps.length ? '' : '没有找到 USB iOS App。')); render(); } catch (error) { setStatus(messageFromError(error, '加载 App 失败。')); render(); } }
+async function openPath(remotePath) { if (!state.selectedAppID) { setStatus('请先选择一个 USB App。'); render(); return; } if (!canBrowseSelectedApp()) { state.entries = []; state.currentPath = remotePath || ''; state.selectedPath = null; setStatus(unsupportedMessage()); render(); return; } try { setStatus(`正在打开 ${displayPath(remotePath)}…`); const result = await callNative('listDirectory', { appID: state.selectedAppID, remotePath }); state.currentPath = result.currentPath || remotePath || ''; state.entries = result.items || []; state.selectedPath = null; setStatus(''); render(); } catch (error) { setStatus(messageFromError(error, '打开目录失败。')); render(); } }
+async function createFolder() { const name = (newFolderInput.value || '').trim(); if (!name) { setStatus('请先输入文件夹名称。'); render(); return; } try { setStatus('正在创建文件夹…'); await callNative('createDirectory', { appID: state.selectedAppID, parentPath: state.currentPath, name }); newFolderInput.value = ''; await openPath(state.currentPath); setStatus('文件夹已创建。'); render(); } catch (error) { setStatus(messageFromError(error, '创建文件夹失败。')); render(); } }
+async function uploadFile() { if (!state.selectedAppID) { setStatus('请先选择一个 USB App。'); render(); return; } try { setStatus('请选择 Mac 本地文件…'); await callNative('uploadFile', { appID: state.selectedAppID, directoryPath: state.currentPath }); await openPath(state.currentPath); setStatus('文件已上传到当前 iOS 沙盒目录。'); render(); } catch (error) { setStatus(messageFromError(error, '上传失败。')); render(); } }
+async function importURL() { const sourceURL = (sourceUrlInput.value || '').trim(); if (!sourceURL) { setStatus('请先输入文件 URL。'); render(); return; } if (!state.selectedAppID) { setStatus('请先选择一个 USB App。'); render(); return; } try { setStatus('正在从 URL 导入到 iOS 沙盒…'); await callNative('importURL', { appID: state.selectedAppID, directoryPath: state.currentPath, sourceURL }); await openPath(state.currentPath); setStatus('URL 文件已导入到当前目录。'); render(); } catch (error) { setStatus(messageFromError(error, '导入失败。')); render(); } }
+async function downloadSelected() { const entry = selectedEntry(); if (!entry || entry.isDirectory) { setStatus('请先选择一个文件。'); render(); return; } try { setStatus('请选择保存到 Mac 的位置…'); await callNative('downloadFile', { appID: state.selectedAppID, remotePath: entry.remotePath }); setStatus('文件已下载到 Mac。'); render(); } catch (error) { setStatus(messageFromError(error, '下载失败。')); render(); } }
+async function deleteSelected() { const entry = selectedEntry(); if (!entry) { setStatus('请先选择一个项目。'); render(); return; } const itemName = entry.name || entry.remotePath || '选中项'; if (!window.confirm(`确定要从 iOS 沙盒删除“${itemName}”吗？\n\n路径：${displayPath(entry.remotePath || '')}`)) { setStatus('已取消删除。'); render(); return; } try { setStatus('正在删除选中项…'); await callNative('removeItem', { appID: state.selectedAppID, remotePath: entry.remotePath }); await openPath(state.currentPath); setStatus('选中项已删除。'); render(); } catch (error) { setStatus(messageFromError(error, '删除失败。')); render(); } }
 document.getElementById('reloadAppsBtn').addEventListener('click', () => bootstrap(state.currentPath));
 document.getElementById('rootBtn').addEventListener('click', () => openPath(''));
 document.getElementById('documentsBtn').addEventListener('click', () => openPath('Documents'));

@@ -10,45 +10,73 @@
   <aside class='sidebar panel'>
     <div class='sidebar-section'>
       <div class='sidebar-title-row'>
-        <span class='sidebar-title'>Connected Apps</span>
+        <span class='sidebar-title'>已连接 App</span>
         <button id='reloadAppsBtn' class='secondary'>刷新</button>
       </div>
       <div id='appTabs' class='app-list'></div>
     </div>
     <div class='sidebar-section'>
-      <span class='sidebar-title'>Places</span>
+      <span class='sidebar-title'>常用位置</span>
       <div class='places-list'>
-        <button id='rootBtn' class='nav-item'><span class='nav-icon'>⌂</span><span><span class='nav-label'>根目录</span><span class='nav-hint'>沙盒根目录</span></span></button>
-        <button id='documentsBtn' class='nav-item'><span class='nav-icon'>📄</span><span><span class='nav-label'>Documents</span><span class='nav-hint'>用户可见文件</span></span></button>
-        <button id='libraryBtn' class='nav-item'><span class='nav-icon'>🗂</span><span><span class='nav-label'>Library</span><span class='nav-hint'>应用支持与缓存</span></span></button>
-        <button id='tmpBtn' class='nav-item'><span class='nav-icon'>⏱</span><span><span class='nav-label'>tmp</span><span class='nav-hint'>临时文件</span></span></button>
+        <button id='rootBtn' class='nav-item'><span class='nav-icon'>⌂</span><span><span class='nav-label'>根目录</span><span class='nav-hint'>Sandbox root</span></span></button>
+        <button id='documentsBtn' class='nav-item'><span class='nav-icon'>D</span><span><span class='nav-label'>Documents</span><span class='nav-hint'>用户文档</span></span></button>
+        <button id='libraryBtn' class='nav-item'><span class='nav-icon'>L</span><span><span class='nav-label'>Library</span><span class='nav-hint'>支持文件与缓存</span></span></button>
+        <button id='tmpBtn' class='nav-item'><span class='nav-icon'>T</span><span><span class='nav-label'>tmp</span><span class='nav-hint'>临时文件</span></span></button>
       </div>
     </div>
-    <div class='sidebar-foot'>Browse the sandbox of a USB-connected iOS app with a Finder-style layout: quick places on the left, the current directory in the center, and contextual details on the right.</div>
+    <div class='sidebar-foot'>
+      <span>USB 沙盒浏览器</span>
+      <strong id='sidebarStatus'>未选择 App</strong>
+    </div>
   </aside>
   <main class='content'>
     <section class='panel header'>
-      <div><div class='eyebrow'>Lookin File Browser</div><h1>Sandbox Explorer</h1></div>
-      <div class='header-meta'><span id='selectionBadge' class='status-badge'>No selection</span><span id='statusText' class='status-text'>Choose an app to start browsing.</span></div>
+      <div><div class='eyebrow'>Lookin File Browser</div><h1>iOS 沙盒文件</h1></div>
+      <div class='header-meta'><span id='selectionBadge' class='status-badge'>未选择 App</span><span id='statusText' class='status-text'>选择左侧 USB App 后开始浏览。</span></div>
+    </section>
+    <section class='panel context-strip'>
+      <div class='context-item'>
+        <span>目标 App</span>
+        <strong id='targetAppName'>未选择</strong>
+        <small id='targetDeviceName'>USB 设备</small>
+      </div>
+      <div class='context-item'>
+        <span>当前目录</span>
+        <strong id='currentPathSummary' class='mono'>/</strong>
+        <small id='currentFolderSummary'>根目录</small>
+      </div>
+      <div class='context-item'>
+        <span>选中项</span>
+        <strong id='selectedItemSummary'>无</strong>
+        <small id='selectedItemPath' class='mono'>未选择</small>
+      </div>
     </section>
     <section class='panel path-panel'>
+      <div class='section-heading'><span>路径</span></div>
       <div id='breadcrumbs' class='breadcrumbs'></div>
       <div class='path-bar'>
-        <input id='pathInput' class='mono grow' placeholder='Sandbox relative path, root is empty'>
+        <label class='field grow'>
+          <span>沙盒相对路径</span>
+          <input id='pathInput' class='mono' placeholder='例如 Documents 或 Library/Caches'>
+        </label>
         <button id='openPathBtn' class='secondary'>打开</button>
         <button id='upBtn' class='secondary'>上一级</button>
         <button id='refreshBtn' class='secondary'>刷新</button>
       </div>
     </section>
     <section class='panel browser-tools'>
+      <div class='section-heading'><span>查看</span></div>
       <div class='browser-tools-row'>
-        <input id='searchInput' class='grow' placeholder='Search in current folder'>
+        <label class='field grow'>
+          <span>搜索当前目录</span>
+          <input id='searchInput' placeholder='文件名、路径或类型'>
+        </label>
         <select id='sortSelect'>
-          <option value='kind-name'>Sort: Folders first</option>
-          <option value='name-asc'>Sort: Name A–Z</option>
-          <option value='name-desc'>Sort: Name Z–A</option>
-          <option value='size-desc'>Sort: Size large-small</option>
-          <option value='size-asc'>Sort: Size small-large</option>
+          <option value='kind-name'>文件夹优先</option>
+          <option value='name-asc'>名称 A-Z</option>
+          <option value='name-desc'>名称 Z-A</option>
+          <option value='size-desc'>大小从大到小</option>
+          <option value='size-asc'>大小从小到大</option>
         </select>
         <div class='view-switch'>
           <button id='listViewBtn' class='secondary active-toggle'>列表</button>
@@ -56,17 +84,37 @@
         </div>
       </div>
     </section>
-    <section class='panel toolbar'>
-      <div class='toolbar-row'>
-        <input id='newFolderInput' placeholder='New folder name'>
-        <button id='newFolderBtn' class='secondary'>新建文件夹</button>
-        <button id='uploadBtn'>上传…</button>
-        <button id='downloadBtn' class='secondary'>下载…</button>
-        <button id='deleteBtn' class='danger'>删除</button>
-      </div>
-      <div class='toolbar-row'>
-        <input id='sourceUrlInput' class='mono grow' placeholder='http://localhost:3335/templates/XJI-Chat.xji'>
-        <button id='importUrlBtn' class='secondary'>导入 URL</button>
+    <section class='panel transfer-panel'>
+      <div class='section-heading'><span>操作</span></div>
+      <div class='operation-grid'>
+        <div class='operation-group'>
+          <div class='operation-title'>当前目录</div>
+          <div class='inline-action'>
+            <label class='field grow'>
+              <span>新文件夹名称</span>
+              <input id='newFolderInput' placeholder='例如 Exports'>
+            </label>
+            <button id='newFolderBtn' class='secondary'>创建文件夹</button>
+          </div>
+        </div>
+        <div class='operation-group operation-group-wide'>
+          <div class='operation-title'>写入到 iOS 沙盒</div>
+          <div class='inline-action'>
+            <button id='uploadBtn'>从 Mac 上传文件</button>
+            <label class='field grow'>
+              <span>文件 URL</span>
+              <input id='sourceUrlInput' class='mono' placeholder='http://localhost:3335/templates/XJI-Chat.xji'>
+            </label>
+            <button id='importUrlBtn' class='secondary'>从 URL 导入</button>
+          </div>
+        </div>
+        <div class='operation-group'>
+          <div class='operation-title'>选中项</div>
+          <div class='selection-actions'>
+            <button id='downloadBtn' class='secondary'>下载到 Mac</button>
+            <button id='deleteBtn' class='danger'>删除选中项</button>
+          </div>
+        </div>
       </div>
     </section>
     <section class='panel file-panel'>
@@ -82,7 +130,7 @@
       </div>
     </section>
   </main>
-  <aside class='inspector panel'><div class='inspector-section'><span class='section-title'>Details</span><div id='detailsCard' class='details-card'></div></div></aside>
+  <aside class='inspector panel'><div class='inspector-section'><span class='section-title'>详情</span><div id='detailsCard' class='details-card'></div></div></aside>
 </div>
 <script src="file-browser.js"></script>
 </body>
