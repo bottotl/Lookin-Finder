@@ -213,6 +213,8 @@
 "Reload layer and its children" = "刷新该图层及子图层";
 "Operation failed." = "操作失败";
 "Please upgrade the LookinServer SDK version in your iOS project to 1.2.7 or higher." = "请先将你的 iOS 项目中的 LookinServer SDK 版本升级至 1.2.7 或更高版本。";
+"USB file transfer is not supported by the target iOS app." = "目标 iOS App 当前不支持 USB 文件传输。";
+"Please upgrade the LookinServer SDK version in your iOS project to 1.2.8 or higher to use the file browser and USB file transfer. Current LookinServer version: %@." = "请先将你的 iOS 项目中的 LookinServer SDK 版本升级至 1.2.8 或更高版本，才能使用文件浏览器和 USB 文件传输。当前 LookinServer 版本：%@。";
 "Some layer data failed to transmit." = "某些图层信息传输失败";
 "It may be due to changes in the layer structure within the iOS app. You can try reloading the entire structure in Lookin." = "可能因为 iOS App 中的图层结构有变化，可尝试在 Lookin 中整体重新刷新。";
 "properties or methods" = "搜索属性或方法";

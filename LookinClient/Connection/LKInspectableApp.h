@@ -22,6 +22,9 @@
 
 @property(nonatomic, weak) Lookin_PTChannel *channel;
 
+- (BOOL)supportsFileTransfer;
+- (NSError *)fileTransferUnsupportedError;
+
 - (RACSignal *)fetchHierarchyData;
 
 - (RACSignal *)submitInbuiltModification:(LookinAttributeModification *)modification;
@@ -43,6 +46,30 @@
 
 /// 修改一个 gestureRecognizer 的 enable 属性。如果 shouldBeEnabled 为 YES 则表示想要把它的 enable 属性修改为 YES
 - (RACSignal *)modifyGestureRecognizer:(unsigned long)oid toBeEnabled:(BOOL)shouldBeEnabled;
+
+- (RACSignal *)writeFileData:(NSData *)data
+         toSandboxRelativePath:(NSString *)remotePath
+                     overwrite:(BOOL)overwrite
+createIntermediateDirectories:(BOOL)createIntermediateDirectories;
+
+- (RACSignal *)writeFileFromMacURLString:(NSString *)sourceURLString
+                   toSandboxRelativePath:(NSString *)remotePath
+                               overwrite:(BOOL)overwrite
+           createIntermediateDirectories:(BOOL)createIntermediateDirectories;
+
+- (RACSignal *)downloadFileFromSourceURLString:(NSString *)sourceURLString
+                         toSandboxRelativePath:(NSString *)remotePath
+                                     overwrite:(BOOL)overwrite
+                 createIntermediateDirectories:(BOOL)createIntermediateDirectories;
+
+- (RACSignal *)readFileAtSandboxRelativePath:(NSString *)remotePath;
+
+- (RACSignal *)listDirectoryAtSandboxRelativePath:(NSString *)remotePath;
+
+- (RACSignal *)createDirectoryAtSandboxRelativePath:(NSString *)remotePath
+                   createIntermediateDirectories:(BOOL)createIntermediateDirectories;
+
+- (RACSignal *)removeItemAtSandboxRelativePath:(NSString *)remotePath;
 
 #pragma mark - Push From iOS
 

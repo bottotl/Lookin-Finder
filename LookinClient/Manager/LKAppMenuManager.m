@@ -33,6 +33,7 @@ static NSUInteger const kTag_DecreaseInterspace = 25;
 static NSUInteger const kTag_IncreaseInterspace = 26;
 static NSUInteger const kTag_Expansion = 27;
 static NSUInteger const kTag_Filter = 28;
+static NSUInteger const kTag_FileBrowser = 30;
 static NSUInteger const kTag_OpenInNewWindow = 31;
 static NSUInteger const kTag_Export = 32;
 
@@ -117,6 +118,21 @@ static NSUInteger const kTag_Acknowledgements = 72;
     NSMenu *menu_file = [menu itemAtIndex:1].submenu;
     menu_file.autoenablesItems = NO;
     menu_file.delegate = self;
+    
+    NSMenuItem *menuItem_fileBrowser = [menu_file itemWithTag:kTag_FileBrowser];
+    if (!menuItem_fileBrowser) {
+        menuItem_fileBrowser = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"File Browser", nil) action:nil keyEquivalent:@"b"];
+        menuItem_fileBrowser.tag = kTag_FileBrowser;
+        menuItem_fileBrowser.keyEquivalentModifierMask = NSEventModifierFlagCommand | NSEventModifierFlagShift;
+        
+        NSInteger insertIndex = [menu_file indexOfItemWithTag:kTag_OpenInNewWindow];
+        if (insertIndex < 0) {
+            insertIndex = menu_file.numberOfItems;
+        }
+        [menu_file insertItem:menuItem_fileBrowser atIndex:insertIndex];
+    }
+    menuItem_fileBrowser.target = self;
+    menuItem_fileBrowser.action = @selector(_handleShowFileBrowser);
     
     // 视图
     NSMenu *menu_view = [menu itemAtIndex:3].submenu;
@@ -251,6 +267,10 @@ static NSUInteger const kTag_Acknowledgements = 72;
 
 - (void)_handlePreferences {
     [[LKNavigationManager sharedInstance] showPreference];
+}
+
+- (void)_handleShowFileBrowser {
+    [[LKNavigationManager sharedInstance] showFileBrowser];
 }
 
 - (void)_handleDelegateItem:(NSMenuItem *)item {

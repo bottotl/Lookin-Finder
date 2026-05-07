@@ -1,0 +1,89 @@
+<!doctype html>
+<html>
+<head>
+<meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<link rel="stylesheet" href="file-browser.css">
+</head>
+<body>
+<div class='shell'>
+  <aside class='sidebar panel'>
+    <div class='sidebar-section'>
+      <div class='sidebar-title-row'>
+        <span class='sidebar-title'>Connected Apps</span>
+        <button id='reloadAppsBtn' class='secondary'>刷新</button>
+      </div>
+      <div id='appTabs' class='app-list'></div>
+    </div>
+    <div class='sidebar-section'>
+      <span class='sidebar-title'>Places</span>
+      <div class='places-list'>
+        <button id='rootBtn' class='nav-item'><span class='nav-icon'>⌂</span><span><span class='nav-label'>根目录</span><span class='nav-hint'>沙盒根目录</span></span></button>
+        <button id='documentsBtn' class='nav-item'><span class='nav-icon'>📄</span><span><span class='nav-label'>Documents</span><span class='nav-hint'>用户可见文件</span></span></button>
+        <button id='libraryBtn' class='nav-item'><span class='nav-icon'>🗂</span><span><span class='nav-label'>Library</span><span class='nav-hint'>应用支持与缓存</span></span></button>
+        <button id='tmpBtn' class='nav-item'><span class='nav-icon'>⏱</span><span><span class='nav-label'>tmp</span><span class='nav-hint'>临时文件</span></span></button>
+      </div>
+    </div>
+    <div class='sidebar-foot'>Browse the sandbox of a USB-connected iOS app with a Finder-style layout: quick places on the left, the current directory in the center, and contextual details on the right.</div>
+  </aside>
+  <main class='content'>
+    <section class='panel header'>
+      <div><div class='eyebrow'>Lookin File Browser</div><h1>Sandbox Explorer</h1></div>
+      <div class='header-meta'><span id='selectionBadge' class='status-badge'>No selection</span><span id='statusText' class='status-text'>Choose an app to start browsing.</span></div>
+    </section>
+    <section class='panel path-panel'>
+      <div id='breadcrumbs' class='breadcrumbs'></div>
+      <div class='path-bar'>
+        <input id='pathInput' class='mono grow' placeholder='Sandbox relative path, root is empty'>
+        <button id='openPathBtn' class='secondary'>打开</button>
+        <button id='upBtn' class='secondary'>上一级</button>
+        <button id='refreshBtn' class='secondary'>刷新</button>
+      </div>
+    </section>
+    <section class='panel browser-tools'>
+      <div class='browser-tools-row'>
+        <input id='searchInput' class='grow' placeholder='Search in current folder'>
+        <select id='sortSelect'>
+          <option value='kind-name'>Sort: Folders first</option>
+          <option value='name-asc'>Sort: Name A–Z</option>
+          <option value='name-desc'>Sort: Name Z–A</option>
+          <option value='size-desc'>Sort: Size large-small</option>
+          <option value='size-asc'>Sort: Size small-large</option>
+        </select>
+        <div class='view-switch'>
+          <button id='listViewBtn' class='secondary active-toggle'>列表</button>
+          <button id='gridViewBtn' class='secondary'>网格</button>
+        </div>
+      </div>
+    </section>
+    <section class='panel toolbar'>
+      <div class='toolbar-row'>
+        <input id='newFolderInput' placeholder='New folder name'>
+        <button id='newFolderBtn' class='secondary'>新建文件夹</button>
+        <button id='uploadBtn'>上传…</button>
+        <button id='downloadBtn' class='secondary'>下载…</button>
+        <button id='deleteBtn' class='danger'>删除</button>
+      </div>
+      <div class='toolbar-row'>
+        <input id='sourceUrlInput' class='mono grow' placeholder='http://localhost:3335/templates/XJI-Chat.xji'>
+        <button id='importUrlBtn' class='secondary'>导入 URL</button>
+      </div>
+    </section>
+    <section class='panel file-panel'>
+      <div class='list-header'><div class='list-title'><strong id='currentFolderName'>Root</strong><span id='footerCount' class='muted'>0 items</span></div><span id='footerPath' class='mono muted'>/</span></div>
+      <div class='table-wrap'>
+        <table id='entriesTable'>
+          <colgroup><col class='name-col'><col class='kind-col'><col class='size-col'><col class='path-col'></colgroup>
+          <thead><tr><th>Name</th><th>Kind</th><th>Size</th><th>Path</th></tr></thead>
+          <tbody id='entriesBody'></tbody>
+        </table>
+        <div id='gridBody' class='grid-wrap hidden'></div>
+        <div id='emptyState' class='empty-state' hidden></div>
+      </div>
+    </section>
+  </main>
+  <aside class='inspector panel'><div class='inspector-section'><span class='section-title'>Details</span><div id='detailsCard' class='details-card'></div></div></aside>
+</div>
+<script src="file-browser.js"></script>
+</body>
+</html>

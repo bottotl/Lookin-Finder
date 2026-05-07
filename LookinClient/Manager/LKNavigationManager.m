@@ -29,6 +29,7 @@
 @property(nonatomic, strong) LKPreferenceWindowController *preferenceWindowController;
 @property(nonatomic, strong) LKJSONAttributeWindowController *jsonWindowController;
 @property(nonatomic, strong) LKAboutWindowController *aboutWindowController;
+@property(nonatomic, strong) NSWindowController *fileBrowserWindowController;
 
 @end
 
@@ -58,6 +59,19 @@
         self.staticWindowController.window.delegate = self;
     }
     [self.staticWindowController showWindow:self];
+}
+
+- (void)showFileBrowser {
+    if (!self.fileBrowserWindowController) {
+        Class windowControllerClass = NSClassFromString(@"LKFileBrowserWindowController");
+        if (!windowControllerClass || ![windowControllerClass isSubclassOfClass:[NSWindowController class]]) {
+            NSAssert(NO, @"LKFileBrowserWindowController is unavailable.");
+            return;
+        }
+        self.fileBrowserWindowController = [[windowControllerClass alloc] init];
+        self.fileBrowserWindowController.window.delegate = self;
+    }
+    [self.fileBrowserWindowController showWindow:self];
 }
 
 - (void)closeLaunch {
@@ -161,6 +175,9 @@
         
     } else if (closingWindow == self.aboutWindowController.window) {
         self.aboutWindowController = nil;
+        
+    } else if (closingWindow == self.fileBrowserWindowController.window) {
+        self.fileBrowserWindowController = nil;
         
     } else {
         LKReadWindowController *wc = [self.readWindowControllers lookin_firstFiltered:^BOOL(LKReadWindowController *obj) {

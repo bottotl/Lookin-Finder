@@ -20,6 +20,8 @@
 
 - (void)showStaticWorkspace;
 
+- (void)showFileBrowser;
+
 - (void)showPreference;
 
 - (void)showAbout;

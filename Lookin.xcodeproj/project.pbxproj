@@ -43,6 +43,9 @@
 		A77AA17E2AEED988006A7BF4 /* LKServerVersionRequestor.m in Sources */ = {isa = PBXBuildFile; fileRef = A77AA17D2AEED988006A7BF4 /* LKServerVersionRequestor.m */; };
 		A77AA1822AEEE095006A7BF4 /* LKVersionComparer.m in Sources */ = {isa = PBXBuildFile; fileRef = A77AA1812AEEE095006A7BF4 /* LKVersionComparer.m */; };
 		A78FCEB42B334D3300F1D307 /* LKDanceUIAttrMaker.m in Sources */ = {isa = PBXBuildFile; fileRef = A78FCEB32B334D3300F1D307 /* LKDanceUIAttrMaker.m */; };
+		ABFB00012C70000100000004 /* file-browser.css in Resources */ = {isa = PBXBuildFile; fileRef = ABFB00012C70000100000005 /* file-browser.css */; };
+		ABFB00012C70000100000006 /* file-browser.js in Resources */ = {isa = PBXBuildFile; fileRef = ABFB00012C70000100000007 /* file-browser.js */; };
+		ABFB00012C70000100000001 /* index.html in Resources */ = {isa = PBXBuildFile; fileRef = ABFB00012C70000100000002 /* index.html */; };
 		A7F8FC552AF289F000ABC7F4 /* LookinCustomDisplayItemInfo+LookinClient.m in Sources */ = {isa = PBXBuildFile; fileRef = A7F8FC542AF289F000ABC7F4 /* LookinCustomDisplayItemInfo+LookinClient.m */; };
 		AA01EF2722DD0D26002A2E06 /* LKHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = AA01EF2522DD0D26002A2E06 /* LKHelper.m */; };
 		AA049A1721E61B85008C6366 /* LKMenuPopoverSettingController.m in Sources */ = {isa = PBXBuildFile; fileRef = AA049A1621E61B85008C6366 /* LKMenuPopoverSettingController.m */; };
@@ -175,6 +178,8 @@
 		AAF418C522BA2C9600111554 /* LKConsoleSelectPopoverItemControl.m in Sources */ = {isa = PBXBuildFile; fileRef = AAF418C422BA2C9600111554 /* LKConsoleSelectPopoverItemControl.m */; };
 		AAF418C822BA2D1300111554 /* LKImageTextView.m in Sources */ = {isa = PBXBuildFile; fileRef = AAF418C722BA2D1300111554 /* LKImageTextView.m */; };
 		BC7E32318E0156F2D16B96CA /* Pods_LookinClient.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 81A3B0CB06C22A05EDC913F3 /* Pods_LookinClient.framework */; };
+		C0FB00012C6A000100000006 /* LKFileBrowserWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = C0FB00012C6A000100000003 /* LKFileBrowserWindowController.m */; };
+		C0FB00012C6A000100000007 /* LKFileBrowserViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C0FB00012C6A000100000005 /* LKFileBrowserViewController.m */; };
 		D4052AC9235CBD090033C961 /* LKMeasureTutorialView.m in Sources */ = {isa = PBXBuildFile; fileRef = D4052AC8235CBD090033C961 /* LKMeasureTutorialView.m */; };
 		D4052ACC235CE2300033C961 /* LKMeasureResultView.m in Sources */ = {isa = PBXBuildFile; fileRef = D4052ACB235CE2300033C961 /* LKMeasureResultView.m */; };
 		D41874D4234B68AE004D68A2 /* LKDashboardAttributeOpenImageView.m in Sources */ = {isa = PBXBuildFile; fileRef = D41874D3234B68AE004D68A2 /* LKDashboardAttributeOpenImageView.m */; };
@@ -291,6 +296,9 @@
 		A77AA1812AEEE095006A7BF4 /* LKVersionComparer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LKVersionComparer.m; sourceTree = "<group>"; };
 		A78FCEB22B334D3300F1D307 /* LKDanceUIAttrMaker.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LKDanceUIAttrMaker.h; sourceTree = "<group>"; };
 		A78FCEB32B334D3300F1D307 /* LKDanceUIAttrMaker.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LKDanceUIAttrMaker.m; sourceTree = "<group>"; };
+		ABFB00012C70000100000002 /* index.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = index.html; sourceTree = "<group>"; };
+		ABFB00012C70000100000005 /* file-browser.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = "file-browser.css"; sourceTree = "<group>"; };
+		ABFB00012C70000100000007 /* file-browser.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "file-browser.js"; sourceTree = "<group>"; };
 		A7F8FC532AF289F000ABC7F4 /* LookinCustomDisplayItemInfo+LookinClient.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "LookinCustomDisplayItemInfo+LookinClient.h"; sourceTree = "<group>"; };
 		A7F8FC542AF289F000ABC7F4 /* LookinCustomDisplayItemInfo+LookinClient.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "LookinCustomDisplayItemInfo+LookinClient.m"; sourceTree = "<group>"; };
 		AA01EF2522DD0D26002A2E06 /* LKHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LKHelper.m; sourceTree = "<group>"; };
@@ -554,6 +562,10 @@
 		AAF418C422BA2C9600111554 /* LKConsoleSelectPopoverItemControl.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LKConsoleSelectPopoverItemControl.m; sourceTree = "<group>"; };
 		AAF418C622BA2D1300111554 /* LKImageTextView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LKImageTextView.h; sourceTree = "<group>"; };
 		AAF418C722BA2D1300111554 /* LKImageTextView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LKImageTextView.m; sourceTree = "<group>"; };
+		C0FB00012C6A000100000002 /* LKFileBrowserWindowController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LKFileBrowserWindowController.h; sourceTree = "<group>"; };
+		C0FB00012C6A000100000003 /* LKFileBrowserWindowController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LKFileBrowserWindowController.m; sourceTree = "<group>"; };
+		C0FB00012C6A000100000004 /* LKFileBrowserViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LKFileBrowserViewController.h; sourceTree = "<group>"; };
+		C0FB00012C6A000100000005 /* LKFileBrowserViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LKFileBrowserViewController.m; sourceTree = "<group>"; };
 		D4052AC7235CBD090033C961 /* LKMeasureTutorialView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LKMeasureTutorialView.h; sourceTree = "<group>"; };
 		D4052AC8235CBD090033C961 /* LKMeasureTutorialView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LKMeasureTutorialView.m; sourceTree = "<group>"; };
 		D4052ACA235CE2300033C961 /* LKMeasureResultView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LKMeasureResultView.h; sourceTree = "<group>"; };
@@ -856,6 +868,7 @@
 				AA77A32C22CE0E7100C73721 /* lookin_icon.icns */,
 				A26EF68527F89F83005A9E4E /* ShortCocoa */,
 				AA39054E23694C3800CA7646 /* About */,
+				C0FB00012C6A000100000001 /* FileBrowser */,
 				AAA8C08F21CC17670017A345 /* Base */,
 				AA08FC9322DF99E700F65B20 /* Tutorial */,
 				AA0757B922C606F3005535DC /* Export */,
@@ -1163,6 +1176,28 @@
 			path = Preference;
 			sourceTree = "<group>";
 		};
+		C0FB00012C6A000100000001 /* FileBrowser */ = {
+			isa = PBXGroup;
+			children = (
+				C0FB00012C6A000100000002 /* LKFileBrowserWindowController.h */,
+				C0FB00012C6A000100000003 /* LKFileBrowserWindowController.m */,
+				C0FB00012C6A000100000004 /* LKFileBrowserViewController.h */,
+				C0FB00012C6A000100000005 /* LKFileBrowserViewController.m */,
+				ABFB00012C70000100000003 /* Resources */,
+			);
+			path = FileBrowser;
+			sourceTree = "<group>";
+		};
+		ABFB00012C70000100000003 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				ABFB00012C70000100000005 /* file-browser.css */,
+				ABFB00012C70000100000007 /* file-browser.js */,
+				ABFB00012C70000100000002 /* index.html */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 		D4224EF02358ED3A00ED9626 /* Measure */ = {
 			isa = PBXGroup;
 			children = (
@@ -1256,6 +1291,9 @@
 				AA48F2A521CC0CA60032EC2C /* MainMenu.xib in Resources */,
 				AA77A32D22CE0E7100C73721 /* lookin_icon.icns in Resources */,
 				A777C2A72B2F55EE00677624 /* DanceScript.sh in Resources */,
+				ABFB00012C70000100000004 /* file-browser.css in Resources */,
+				ABFB00012C70000100000006 /* file-browser.js in Resources */,
+				ABFB00012C70000100000001 /* index.html in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1312,6 +1350,7 @@
 				AAA8C13A21CC17680017A345 /* LKStaticHierarchyController.m in Sources */,
 				AAEF2C112308420400CFAC53 /* LKPreviewView.m in Sources */,
 				AA3D51AA2289E57C00E4E6B7 /* LKExportManager.m in Sources */,
+				C0FB00012C6A000100000006 /* LKFileBrowserWindowController.m in Sources */,
 				AAEE450721DF81C300BF2650 /* LKPreferenceWindowController.m in Sources */,
 				AA13691E22C3DA6F00B8AE87 /* LKTutorialManager.m in Sources */,
 				AAAEB36E22B408DF00A3DDE7 /* LKDashboardAttributeStringArrayView.m in Sources */,
@@ -1334,6 +1373,7 @@
 				AAA8C11F21CC17680017A345 /* LKConnectionManager.m in Sources */,
 				AAEE450B21DF820100BF2650 /* LKPreferenceViewController.m in Sources */,
 				A721E4912B1CE2F000546017 /* LKJSONAttributeViewController.m in Sources */,
+				C0FB00012C6A000100000007 /* LKFileBrowserViewController.m in Sources */,
 				A7F8FC552AF289F000ABC7F4 /* LookinCustomDisplayItemInfo+LookinClient.m in Sources */,
 				AAAF21152226BD4D00975C95 /* LKTextFieldView.m in Sources */,
 				AAA8C15A21CC17680017A345 /* LKSplitView.m in Sources */,
