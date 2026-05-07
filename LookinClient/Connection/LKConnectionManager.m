@@ -15,11 +15,69 @@
 #import "LKConnectionRequest.h"
 #import "LKServerVersionRequestor.h"
 
+static uint32_t const LKPushDesktopFileDownload = 305;
+static NSUInteger const LKDesktopFileDownloadInlineMaxSize = 32 * 1024 * 1024;
+
+static NSString * const LKDesktopFileDownloadSourceURLKey = @"sourceURL";
+static NSString * const LKDesktopFileDownloadRemotePathKey = @"remotePath";
+static NSString * const LKDesktopFileDownloadOverwriteKey = @"overwrite";
+static NSString * const LKDesktopFileDownloadCreateDirectoriesKey = @"createIntermediateDirectories";
+
+static NSString * const LKFileTransferActionKey = @"action";
+static NSString * const LKFileTransferActionWriteFile = @"writeFile";
+static NSString * const LKFileTransferRemotePathKey = @"remotePath";
+static NSString * const LKFileTransferContentKey = @"content";
+static NSString * const LKFileTransferOverwriteKey = @"overwrite";
+static NSString * const LKFileTransferCreateDirectoriesKey = @"createIntermediateDirectories";
+
+static NSString *LKDesktopFileDownloadBodyPreview(NSData *data) {
+    if (!data.length) {
+        return @"";
+    }
+    
+    NSUInteger previewLength = MIN(data.length, 1024);
+    NSData *previewData = [data subdataWithRange:NSMakeRange(0, previewLength)];
+    NSString *preview = [[NSString alloc] initWithData:previewData encoding:NSUTF8StringEncoding];
+    if (!preview.length) {
+        preview = [previewData base64EncodedStringWithOptions:0];
+    }
+    if (data.length > previewLength) {
+        preview = [preview stringByAppendingFormat:@"... (%@ bytes total)", @(data.length)];
+    }
+    return preview ?: @"";
+}
+
+static NSString *LKDesktopFileDownloadHTTPDetail(NSString *sourceURLString, NSHTTPURLResponse *response, NSData *data) {
+    NSMutableArray<NSString *> *parts = [NSMutableArray array];
+    [parts addObject:[NSString stringWithFormat:@"status=%@", @(response.statusCode)]];
+    if (sourceURLString.length) {
+        [parts addObject:[NSString stringWithFormat:@"sourceURL=%@", sourceURLString]];
+    }
+    if (response.URL.absoluteString.length) {
+        [parts addObject:[NSString stringWithFormat:@"responseURL=%@", response.URL.absoluteString]];
+    }
+    if (response.MIMEType.length) {
+        [parts addObject:[NSString stringWithFormat:@"mimeType=%@", response.MIMEType]];
+    }
+    if (response.textEncodingName.length) {
+        [parts addObject:[NSString stringWithFormat:@"encoding=%@", response.textEncodingName]];
+    }
+    if (response.allHeaderFields.count) {
+        [parts addObject:[NSString stringWithFormat:@"headers=%@", response.allHeaderFields]];
+    }
+    NSString *bodyPreview = LKDesktopFileDownloadBodyPreview(data);
+    if (bodyPreview.length) {
+        [parts addObject:[NSString stringWithFormat:@"bodyPreview=%@", bodyPreview]];
+    }
+    return [parts componentsJoinedByString:@"\n"];
+}
+
 static NSIndexSet * PushFrameTypeList() {
     static NSIndexSet *list;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         NSMutableIndexSet *set = [NSMutableIndexSet indexSet];
+        [set addIndex:LKPushDesktopFileDownload];
         list = set.copy;
     });
     return list;
@@ -441,6 +499,11 @@ static NSIndexSet * PushFrameTypeList() {
 }
 
 - (void)ioFrameChannel:(Lookin_PTChannel*)channel didReceiveFrameOfType:(uint32_t)type tag:(uint32_t)tag payload:(Lookin_PTData*)payload {
+    if (type == LKPushDesktopFileDownload) {
+        [self _handleDesktopFileDownloadRequestOnChannel:channel tag:tag payload:payload];
+        return;
+    }
+    
     if ([PushFrameTypeList() containsIndex:type]) {
         NSData *data = [NSData dataWithContentsOfDispatchData:payload.dispatchData];
         NSError *unarchiveError = nil;
@@ -545,6 +608,126 @@ static NSIndexSet * PushFrameTypeList() {
     [self.channelWillEnd sendNext:channel];
     
     [channel close];
+}
+
+#pragma mark - Desktop File Download
+
+- (void)_handleDesktopFileDownloadRequestOnChannel:(Lookin_PTChannel *)channel tag:(uint32_t)tag payload:(Lookin_PTData *)payload {
+    NSDictionary *params = [self _desktopFileDownloadPayloadFromData:payload];
+    NSString *sourceURLString = [params[LKDesktopFileDownloadSourceURLKey] isKindOfClass:[NSString class]] ? params[LKDesktopFileDownloadSourceURLKey] : nil;
+    NSString *remotePath = [params[LKDesktopFileDownloadRemotePathKey] isKindOfClass:[NSString class]] ? params[LKDesktopFileDownloadRemotePathKey] : nil;
+    BOOL overwrite = [params[LKDesktopFileDownloadOverwriteKey] respondsToSelector:@selector(boolValue)] ? [params[LKDesktopFileDownloadOverwriteKey] boolValue] : YES;
+    BOOL createDirectories = [params[LKDesktopFileDownloadCreateDirectoriesKey] respondsToSelector:@selector(boolValue)] ? [params[LKDesktopFileDownloadCreateDirectoriesKey] boolValue] : YES;
+    
+    if (!sourceURLString.length || !remotePath.length) {
+        NSLog(@"Lookin-Finder DesktopFileDownload failed: invalid params=%@", params);
+        [self _sendDesktopFileDownloadResponseOnChannel:channel tag:tag data:nil error:LookinErr_Inner];
+        return;
+    }
+    NSURL *sourceURL = [NSURL URLWithString:sourceURLString];
+    if (!sourceURL) {
+        NSError *error = LookinErrorMake(@"The desktop download URL is invalid.", sourceURLString);
+        NSLog(@"Lookin-Finder DesktopFileDownload failed: %@", error);
+        [self _sendDesktopFileDownloadResponseOnChannel:channel tag:tag data:nil error:error];
+        return;
+    }
+    
+    NSLog(@"Lookin-Finder DesktopFileDownload start: tag=%@ sourceURL=%@ remotePath=%@", @(tag), sourceURLString, remotePath);
+    NSURLSessionDataTask *task = [[NSURLSession sharedSession] dataTaskWithURL:sourceURL completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+        if (error) {
+            NSLog(@"Lookin-Finder DesktopFileDownload network error: tag=%@ sourceURL=%@ error=%@", @(tag), sourceURLString, error);
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self _sendDesktopFileDownloadResponseOnChannel:channel tag:tag data:nil error:error];
+            });
+            return;
+        }
+        if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
+            NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
+            NSInteger statusCode = httpResponse.statusCode;
+            if (statusCode >= 400) {
+                NSString *detail = LKDesktopFileDownloadHTTPDetail(sourceURLString, httpResponse, data);
+                NSError *httpError = LookinErrorMake(@"The desktop URL returned an HTTP error.", detail);
+                NSLog(@"Lookin-Finder DesktopFileDownload HTTP error:\n%@", detail);
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [self _sendDesktopFileDownloadResponseOnChannel:channel tag:tag data:nil error:httpError];
+                });
+                return;
+            }
+            NSLog(@"Lookin-Finder DesktopFileDownload HTTP response: tag=%@ status=%@ sourceURL=%@ bytes=%@ mimeType=%@",
+                  @(tag), @(statusCode), sourceURLString, @(data.length), httpResponse.MIMEType ?: @"");
+        }
+        if (!data) {
+            NSError *emptyError = LookinErrorMake(@"The desktop URL returned no data.", sourceURLString);
+            NSLog(@"Lookin-Finder DesktopFileDownload empty response: tag=%@ sourceURL=%@", @(tag), sourceURLString);
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self _sendDesktopFileDownloadResponseOnChannel:channel tag:tag data:nil error:emptyError];
+            });
+            return;
+        }
+        if (data.length > LKDesktopFileDownloadInlineMaxSize) {
+            NSError *sizeError = LookinErrorMake(@"The downloaded file is too large for inline USB transfer.",
+                                                 @"The current protocol supports single-request transfers up to 32 MB. Add chunked streaming for larger files.");
+            NSLog(@"Lookin-Finder DesktopFileDownload too large: tag=%@ sourceURL=%@ bytes=%@", @(tag), sourceURLString, @(data.length));
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self _sendDesktopFileDownloadResponseOnChannel:channel tag:tag data:nil error:sizeError];
+            });
+            return;
+        }
+        
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSDictionary *writePayload = @{
+                LKFileTransferActionKey: LKFileTransferActionWriteFile,
+                LKFileTransferRemotePathKey: remotePath,
+                LKFileTransferContentKey: data,
+                LKFileTransferOverwriteKey: @(overwrite),
+                LKFileTransferCreateDirectoriesKey: @(createDirectories)
+            };
+            [[[self requestWithType:LookinRequestTypeFileTransfer data:writePayload channel:channel] deliverOnMainThread] subscribeNext:^(RACTuple *tuple) {
+                LookinConnectionResponseAttachment *attachment = tuple.first;
+                if (attachment.error) {
+                    NSLog(@"Lookin-Finder DesktopFileDownload write failed: tag=%@ remotePath=%@ error=%@", @(tag), remotePath, attachment.error);
+                    [self _sendDesktopFileDownloadResponseOnChannel:channel tag:tag data:nil error:attachment.error];
+                    return;
+                }
+                
+                NSMutableDictionary *responseData = [NSMutableDictionary dictionary];
+                if ([attachment.data isKindOfClass:[NSDictionary class]]) {
+                    [responseData addEntriesFromDictionary:(NSDictionary *)attachment.data];
+                }
+                responseData[LKDesktopFileDownloadSourceURLKey] = sourceURLString;
+                responseData[@"mode"] = @"macBridge";
+                NSLog(@"Lookin-Finder DesktopFileDownload success: tag=%@ sourceURL=%@ remotePath=%@ bytes=%@", @(tag), sourceURLString, remotePath, @(data.length));
+                [self _sendDesktopFileDownloadResponseOnChannel:channel tag:tag data:responseData error:nil];
+            } error:^(NSError * _Nonnull requestError) {
+                NSLog(@"Lookin-Finder DesktopFileDownload request failed: tag=%@ remotePath=%@ error=%@", @(tag), remotePath, requestError);
+                [self _sendDesktopFileDownloadResponseOnChannel:channel tag:tag data:nil error:requestError];
+            }];
+        });
+    }];
+    [task resume];
+}
+
+- (NSDictionary *)_desktopFileDownloadPayloadFromData:(Lookin_PTData *)payload {
+    NSData *data = payload ? [NSData dataWithContentsOfDispatchData:payload.dispatchData] : nil;
+    if (!data) {
+        return nil;
+    }
+    id object = [NSKeyedUnarchiver unarchiveObjectWithData:data];
+    return [object isKindOfClass:[NSDictionary class]] ? object : nil;
+}
+
+- (void)_sendDesktopFileDownloadResponseOnChannel:(Lookin_PTChannel *)channel tag:(uint32_t)tag data:(NSDictionary *)data error:(NSError *)error {
+    LookinConnectionResponseAttachment *attachment = [LookinConnectionResponseAttachment new];
+    attachment.data = data;
+    attachment.error = error;
+    
+    NSData *archivedData = [NSKeyedArchiver archivedDataWithRootObject:attachment];
+    if (!archivedData) {
+        return;
+    }
+    
+    dispatch_data_t dispatchData = [archivedData createReferencingDispatchData];
+    [channel sendFrameOfType:LKPushDesktopFileDownload tag:tag withPayload:dispatchData callback:nil];
 }
 
 @end

@@ -237,7 +237,7 @@ For this case, the recommended flow is:
 1. let the macOS client download the URL locally
 2. then reuse `writeFile` over the existing USB channel
 
-The macOS client now exposes a convenience wrapper for this flow:
+The macOS client exposes a convenience wrapper for this flow when the Mac side initiates the import:
 
 ```objc
 - (RACSignal *)writeFileFromMacURLString:(NSString *)sourceURLString
@@ -247,6 +247,21 @@ The macOS client now exposes a convenience wrapper for this flow:
 ```
 
 This keeps `http://localhost:3335/...` valid because the URL is resolved on the Mac, not on the iOS device.
+
+The iOS server can also initiate the same Mac-side bridge explicitly:
+
+```swift
+Lookin.downloadFile(
+    fromMacURLString: "http://localhost:3335/templates/XJI-Chat.xji",
+    toSandboxRelativePath: "Documents/XJI-Chat.xji",
+    overwrite: true,
+    createIntermediateDirectories: true
+) { response, error in
+    // response includes remotePath / writtenBytes on success
+}
+```
+
+That API sends push frame `305` to the macOS client. The macOS client downloads `sourceURL` locally, then sends a normal `writeFile` request (`215`) back over the same USB channel, and finally responds to frame `305` with the write result.
 
 By contrast, the iOS-side `downloadFromURL` action should reject `localhost` / `127.0.0.1` / `::1` because those addresses point back to the device itself on real hardware.
 
